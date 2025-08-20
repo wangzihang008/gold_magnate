@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import numpy as np
 
 matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'Arial Unicode MS', 'Arial']
 matplotlib.rcParams['axes.unicode_minus'] = False
@@ -20,6 +21,8 @@ BUILTIN_NEWS = {
     "2008-09-16": "美联储向市场注入巨额流动性。（利好黄金）",
     "2008-09-29": "美国众议院否决7000亿美元救助法案。（极大利好黄金）",
 }
+sharedProfitHist = np.array([])
+
 
 #账户
 class Account:
@@ -57,6 +60,7 @@ class Account:
             return "没有持仓可平。", 0.0
         pnl = (current_price - self.entry_price) * self.position * self.lot_size
         self.balance += pnl
+        sharedProfit.set(sharedProfit.get() + pnl)
         margin_released = abs(self.entry_price * self.position * 0.1)
         self.balance += margin_released
         pos = self.position
@@ -85,6 +89,10 @@ class TradingGameUI:
         self.total_days = 0
         self.idx = 0
         self.price_history = []
+
+        global sharedProfit, sharedUnrealizedProfit
+        sharedProfit = tk.DoubleVar(value=0.0)
+        sharedUnrealizedProfit = tk.DoubleVar(value = 0.0)
 
         self.total_game_ms = 10 * 60 * 1000  
         self.update_interval_ms = 1000 
@@ -191,6 +199,12 @@ class TradingGameUI:
 
         tk.Label(trade, text="说明：10% 保证金；先平仓再反向开仓。", font=("Microsoft YaHei", 12)).pack(anchor="w", pady=(6, 0))
 
+        pf = tk.Frame(trade)
+        pf.pack(anchor="w", pady=4)
+
+        tk.Button(pf, text="Profit", font=self.font_big, command=self.getProfitChart, width=10).grid(row=0, column=0, padx=4, pady=4)
+        tk.Button(pf, text="History", font=self.font_big, command=self.getProfitChart, width=10).grid(row=0, column=1, padx=4, pady=4)
+        
         chart_frame = tk.LabelFrame(mid, text="黄金价格走势图", font=self.font_title, padx=8, pady=8)
         chart_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
@@ -267,6 +281,11 @@ class TradingGameUI:
         self.ax.autoscale_view()
         self.canvas.draw()
 
+        sharedUnrealizedProfit.set(self.account.floating_pnl(price))
+        global sharedProfitHist
+        sharedProfitHist = np.append(sharedProfitHist, sharedProfit.get()+sharedUnrealizedProfit.get())
+
+        
         dstr = day.strftime("%Y-%m-%d")
         news_text = self.news_map.get(dstr, "")
         self.set_news(news_text)
@@ -316,6 +335,40 @@ class TradingGameUI:
             messagebox.showerror("输入错误", "请输入有效的手数（正整数）")
             return None
 
+    def drawChart(self):
+            
+            self.ax2.clear()
+            self.ax2.plot(sharedProfitHist, marker='o', color='blue', label='Profit')
+        
+            self.ax2.set_title("Profit History", fontsize=14)
+            self.ax2.set_xlabel("Time", fontsize=12)
+            self.ax2.set_ylabel("Profit", fontsize=12)
+            
+            self.ax2.legend(loc='upper left')
+            self.ax2.relim()
+            self.ax2.autoscale_view()
+            
+            
+            self.canvas2.draw()
+            self.profitRoot.after(self.update_interval_ms, self.drawChart)
+            
+
+            
+    def getProfitChart(self):
+        
+        self.profitRoot = tk.Toplevel(root)
+        self.profitRoot.title("Profit History")
+        self.profitRoot.geometry("1200x800")
+        
+        self.fig2, self.ax2 = plt.subplots(figsize=(5, 3))
+        
+        self.canvas2 = FigureCanvasTkAgg(self.fig2, master=self.profitRoot)
+        self.canvas2.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        
+        self.drawChart()
+
+
+        
     #结束结算
     def end_game(self):
         self.timer_running = False

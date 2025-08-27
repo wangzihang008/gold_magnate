@@ -21,7 +21,7 @@ BUILTIN_NEWS = {
     "2008-09-16": "美联储向市场注入巨额流动性。（利好黄金）",
     "2008-09-29": "美国众议院否决7000亿美元救助法案。（极大利好黄金）",
 }
-sharedProfitHist = np.array([])
+
 
 
 #账户
@@ -60,7 +60,7 @@ class Account:
             return "没有持仓可平。", 0.0
         pnl = (current_price - self.entry_price) * self.position * self.lot_size
         self.balance += pnl
-        sharedProfit.set(sharedProfit.get() + pnl)
+        gloProfit.set(gloProfit.get() + pnl)
         margin_released = abs(self.entry_price * self.position * 0.1)
         self.balance += margin_released
         pos = self.position
@@ -90,9 +90,11 @@ class TradingGameUI:
         self.idx = 0
         self.price_history = []
 
-        global sharedProfit, sharedUnrealizedProfit
-        sharedProfit = tk.DoubleVar(value=0.0)
-        sharedUnrealizedProfit = tk.DoubleVar(value = 0.0)
+        self.ProfitHist = np.array([])
+
+        global gloProfit
+        gloProfit = tk.DoubleVar(value=0.0)
+        self.UnrealizedProfit = tk.DoubleVar(value = 0.0)
 
         self.total_game_ms = 10 * 60 * 1000  
         self.update_interval_ms = 1000 
@@ -281,9 +283,9 @@ class TradingGameUI:
         self.ax.autoscale_view()
         self.canvas.draw()
 
-        sharedUnrealizedProfit.set(self.account.floating_pnl(price))
-        global sharedProfitHist
-        sharedProfitHist = np.append(sharedProfitHist, sharedProfit.get()+sharedUnrealizedProfit.get())
+        self.UnrealizedProfit.set(self.account.floating_pnl(price))
+        
+        self.ProfitHist = np.append(self.ProfitHist, gloProfit.get()+self.UnrealizedProfit.get())
 
         
         dstr = day.strftime("%Y-%m-%d")
@@ -338,11 +340,12 @@ class TradingGameUI:
     def drawChart(self):
             
             self.ax2.clear()
-            self.ax2.plot(sharedProfitHist, marker='o', color='blue', label='Profit')
+            self.ax2.plot(self.ProfitHist, marker='o', color='blue', label='Profit')
         
             self.ax2.set_title("Profit History", fontsize=14)
             self.ax2.set_xlabel("Time", fontsize=12)
             self.ax2.set_ylabel("Profit", fontsize=12)
+            self.ax2.axhline(y=self.ProfitHist[-1], color="red", linestyle="--", label=f"Profit: {self.ProfitHist[-1]}")
             
             self.ax2.legend(loc='upper left')
             self.ax2.relim()

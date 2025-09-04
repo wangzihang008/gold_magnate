@@ -10,6 +10,9 @@ matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
+import csv
+from datetime import datetime
+import tkinter.simpledialog
 
 matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'Arial Unicode MS', 'Arial']
 matplotlib.rcParams['axes.unicode_minus'] = False
@@ -22,7 +25,114 @@ BUILTIN_NEWS = {
     "2008-09-29": "The US House rejects $700 billion bailout bill. (Strongly bullish for gold)",
 }
 
-
+class PlayerManager:
+    """Class for managing player information and rankings"""
+    
+    def __init__(self):
+        self.results_file = "player_results.csv"
+        self.player_name = ""
+        self.ensure_results_file()
+    
+    def ensure_results_file(self):
+        """Ensure the result file exists; if it does not exist, create it."""
+        if not os.path.exists(self.results_file):
+            try:
+                with open(self.results_file, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    writer.writerow(['Player Name', 'Game Date', 'Initial Capital', 'Final Balance', 'Total Profit/Loss', 'Return on Investment (ROI) (%)', 'Number of Trades'])
+            except Exception as e:
+                print(f"Failed to create the result file：{e}")
+    
+    def get_player_name(self, parent_window):
+        """Retrieve player name"""
+        while True:
+            name = tkinter.simpledialog.askstring(
+                "Player Information", 
+                "Please enter your name:\n(Used for recording game scores and rankings)",
+                parent=parent_window
+            )
+            
+            if name is None:  #The user clicked Cancel.
+                return None
+            
+            name = name.strip()
+            if len(name) == 0:
+                messagebox.showwarning("Input error", "Name cannot be left blank，please re-enter!")
+                continue
+            elif len(name) > 20:
+                messagebox.showwarning("Input error", "The name length must not exceed 20 characters，please re-enter!")
+                continue
+            else:
+                self.player_name = name
+                return name
+    
+    def save_game_result(self, initial_balance, final_balance, trade_count):
+        """Save game results to a CSV file"""
+        if not self.player_name:
+            return False
+        
+        pl = final_balance - initial_balance
+        rr = (pl / initial_balance) * 100.0
+        game_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        try:
+            with open(self.results_file, 'a', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow([
+                    self.player_name,
+                    game_date,
+                    f"{initial_balance:.2f}",
+                    f"{final_balance:.2f}",
+                    f"{pl:.2f}",
+                    f"{rr:.2f}",
+                    trade_count
+                ])
+            return True
+        except Exception as e:
+            return False
+    
+    def get_player_ranking(self, player_name=None):
+        """Retrieve the ranking of a specified player (by return on investment)"""
+        if player_name is None:
+            player_name = self.player_name
+        
+        try:
+            df = pd.read_csv(self.results_file, encoding='utf-8')
+            if df.empty:
+                return None, 0
+            
+            # Sort in descending order by return on investment
+            df_sorted = df.sort_values('Return on Investment(%)', ascending=False)
+            
+            # Find the player's latest record ranking
+            player_records = df[df['Player Name'] == player_name]
+            if player_records.empty:
+                return None, 0
+            
+            # Retrieve the player's most recent game session.
+            latest_record = player_records.iloc[-1]
+            latest_return = latest_record['Return on Investment(%)']
+            
+            # Calculate Rank (Number of players with higher return rate than this player + 1)
+            rank = len(df_sorted[df_sorted['Return on Investment(%)'] > latest_return]) + 1
+            total_players = len(df_sorted)
+            
+            return rank, total_players
+        except Exception as e:
+            return None, 0
+    
+    def get_top_rankings(self, top_n=5):
+        """Get the top N entries in the rankings"""
+        try:
+            df = pd.read_csv(self.results_file, encoding='utf-8')
+            if df.empty:
+                return []
+            
+            # Sort in descending order by return on investment
+            df_sorted = df.sort_values('Return on Investment(%)', ascending=False)
+            return df_sorted.head(top_n).to_dict('records')
+        except Exception as e:
+            return []
 
 #账户
 class Account:
@@ -79,6 +189,19 @@ class TradingGameUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Gold Magnate Game 2008")
+
+        # Initialize Player Manager
+        self.player_manager = PlayerManager()
+        self.trade_count = 0
+        
+        # Retrieve player name
+        player_name = self.player_manager.get_player_name(self.root)
+        if player_name is None:
+            messagebox.showinfo("Game Exit", "No name entered. Game will exit.")
+            self.root.quit()
+            return
+        
+        self.root.title(f"Gold Magnate Game 2008 - gamer：{player_name}")
 
         self.font_big = ("Microsoft YaHei", 18)
         self.font_title = ("Microsoft YaHei", 20, "bold")
@@ -170,6 +293,12 @@ class TradingGameUI:
         top = tk.LabelFrame(self.root, text="Account and Market", font=self.font_title, padx=8, pady=8)
         top.pack(side=tk.TOP, fill=tk.X, padx=8, pady=(8, 4))
 
+        # Add player name display
+        player_frame = tk.Frame(top)
+        player_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 8))
+        tk.Label(player_frame, text=f"gamer: {self.player_manager.player_name}", 
+                font=self.font_big, fg="blue").pack(side=tk.LEFT)
+
         self.lbl_balance = tk.Label(top, text="Account Balance: 0.00", font=self.font_big)
         self.lbl_balance.pack(side=tk.LEFT, padx=(4, 16))
 
@@ -234,6 +363,11 @@ class TradingGameUI:
         self.txt_news.pack(fill=tk.BOTH, expand=True)
 
     #日志与新闻显示
+    def log(self, msg):
+        self.txt_log.insert(tk.END, msg + "\n")
+        self.txt_log.see(tk.END)
+
+    # Add counting only to the trading method
     def log(self, msg):
         self.txt_log.insert(tk.END, msg + "\n")
         self.txt_log.see(tk.END)
@@ -385,6 +519,43 @@ class TradingGameUI:
         final_balance = self.account.balance
         pl = final_balance - self.account.initial_balance
         rr = (pl / self.account.initial_balance) * 100.0
+
+        # Save game results
+        save_success = self.player_manager.save_game_result(
+            self.account.initial_balance, 
+            final_balance, 
+            self.trade_count
+        )
+        
+        # Get Player Rankings
+        rank, total_players = self.player_manager.get_player_ranking()
+        
+        # Get the top 5 rankings
+        top_rankings = self.player_manager.get_top_rankings(5)
+        
+        # Building Ranking Information
+        ranking_info = ""
+        if rank and total_players > 0:
+            ranking_info = f"Your ranking: NO. {rank} / Total {total_players} players\n"
+        
+        # Display Rankings
+        if top_rankings:
+            ranking_info += "\n=== Top 5 Rankings ===\n"
+            for i, record in enumerate(top_rankings, 1):
+                ranking_info += f"{i}. {record['Player Name']} - {record['Return on Investment(%)']}%\n"
+        
+        # Display results
+        result_msg = f"""Game over！
+
+Player Name: {self.player_manager.player_name}
+Final Account Balance: {final_balance:.2f}
+Total Profit and Loss: {pl:.2f}
+Return on Investment: {rr:.2f}%
+Total number of transactions: {self.trade_count}
+
+{ranking_info}
+{('Results saved!' if save_success else 'Saving failed!')}"""
+        
         messagebox.showinfo("Game over",
                             f"Final account balance: {final_balance:.2f}\nTotal profit and loss: {pl:.2f}\nReturn on investment: {rr:.2f}%")
         self.root.quit()
@@ -394,3 +565,4 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = TradingGameUI(root)
     root.mainloop()
+

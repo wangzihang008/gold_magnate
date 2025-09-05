@@ -26,12 +26,13 @@ BUILTIN_NEWS = {
 
 #账户
 class Account:
-    def __init__(self, initial_balance=100000.0, lot_size=1):
+    def __init__(self, initial_balance=100000.0, lot_size=1, name="unknown"):
         self.initial_balance = float(initial_balance)
         self.balance = float(initial_balance)
         self.position = 0
         self.entry_price = 0.0
         self.lot_size = lot_size
+        self.name = name
 
     def buy(self, price, quantity):
         if self.position != 0:
@@ -76,14 +77,15 @@ class Account:
 
 #主界面
 class TradingGameUI:
-    def __init__(self, root):
+    def __init__(self, root, name="unknown"):
         self.root = root
-        self.root.title("Gold Magnate Game 2008")
+        self.player_name = name
+        self.root.title(f"{self.player_name} - Gold Magnate Game 2008")
 
         self.font_big = ("Microsoft YaHei", 18)
         self.font_title = ("Microsoft YaHei", 20, "bold")
 
-        self.account = Account(initial_balance=100000.0, lot_size=1)
+        self.account = Account(initial_balance=100000.0, lot_size=1, name=self.player_name)
         self.price_df = pd.DataFrame()
         self.days = []
         self.total_days = 0

@@ -76,6 +76,7 @@ class Account:
 
 #主界面
 class TradingGameUI:
+    
     def __init__(self, root):
         self.root = root
         self.root.title("Gold Magnate Game 2008")

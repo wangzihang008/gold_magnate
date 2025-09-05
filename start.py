@@ -21,6 +21,7 @@ class TradingGameUI:
 
         mainfarme = tk.LabelFrame(frame, text="Game Dashboard", font=self.font_title, padx=8, pady=8)
         mainfarme.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 8))
+
         
         buttons = tk.Frame(mainfarme)
         buttons.pack(anchor="w", pady=4)

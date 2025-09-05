@@ -26,6 +26,7 @@ BUILTIN_NEWS = {
 
 #账户
 class Account:
+    
     def __init__(self, initial_balance=100000.0, lot_size=1):
         self.initial_balance = float(initial_balance)
         self.balance = float(initial_balance)

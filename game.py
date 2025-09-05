@@ -10,6 +10,7 @@ matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
+from datetime import datetime
 
 matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'Arial Unicode MS', 'Arial']
 matplotlib.rcParams['axes.unicode_minus'] = False
@@ -365,7 +366,7 @@ class TradingGameUI:
         self.profitRoot.after(self.update_interval_ms, self.drawChart)
             
     def getProfitChart(self):
-        self.profitRoot = tk.Toplevel(root)
+        self.profitRoot = tk.Toplevel(self.root)
         self.profitRoot.title("Profit History")
         self.profitRoot.geometry("1200x800")
         
@@ -387,9 +388,148 @@ class TradingGameUI:
         final_balance = self.account.balance
         pl = final_balance - self.account.initial_balance
         rr = (pl / self.account.initial_balance) * 100.0
-        messagebox.showinfo("Game over",
-                            f"Final account balance: {final_balance:.2f}\nTotal profit and loss: {pl:.2f}\nReturn on investment: {rr:.2f}%")
+
+        df = self.save_game_result(final_balance, pl, rr)
+        
+        # 获取排名信息
+        current_ranking, total_players = self.get_player_ranking(df)
+        
+        # 显示游戏结束信息
+        result_msg = f"Final account balance: {final_balance:.2f}\nTotal profit and loss: {pl:.2f}\nReturn on investment: {rr:.2f}%"
+        if current_ranking:
+            result_msg += f"\n\nYour Ranking: #{current_ranking} out of {total_players} players!"
+            
+        messagebox.showinfo("Game over", result_msg)
+
+        self.show_rankings(df, current_ranking, total_players, rr)
+        
         self.root.quit()
+
+    def save_game_result(self, final_balance, pl, rr):
+        """保存游戏结果到CSV文件"""
+        csv_file = "game_rankings_2008.csv"
+        
+        # 创建新记录
+        new_record = {
+            'player_name': self.player_name,
+            'final_balance': final_balance,
+            'profit_loss': pl,
+            'return_rate': rr,
+            'play_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        # 读取现有数据或创建新DataFrame
+        if os.path.exists(csv_file):
+            try:
+                df = pd.read_csv(csv_file)
+            except:
+                df = pd.DataFrame()
+        else:
+            df = pd.DataFrame()
+        
+        # 添加新记录
+        new_df = pd.DataFrame([new_record])
+        df = pd.concat([df, new_df], ignore_index=True)
+        
+        # 保存到CSV
+        df.to_csv(csv_file, index=False)
+        
+        return df
+    
+    def get_player_ranking(self, df):
+        """获取当前玩家在所有记录中的排名"""
+        if df.empty:
+            return None, 0
+        
+        # 按回报率排序
+        df_sorted = df.sort_values('return_rate', ascending=False).reset_index(drop=True)
+        
+        # 找到当前玩家最新记录的排名
+        current_record = df_sorted[df_sorted['player_name'] == self.player_name].iloc[-1:]
+        if not current_record.empty:
+            ranking = df_sorted.index[df_sorted['return_rate'] == current_record['return_rate'].iloc[0]][0] + 1
+            total_players = len(df_sorted)
+            return ranking, total_players
+        
+        return None, len(df_sorted)
+    
+    def show_rankings(self, df, current_ranking, total_players, current_rr):
+        """显示排行榜窗口"""
+        ranking_window = tk.Toplevel(self.root)
+        ranking_window.title("Game Rankings - 2008 Original")
+        ranking_window.geometry("600x500")
+        ranking_window.configure(bg='white')
+        
+        # 主框架
+        main_frame = tk.Frame(ranking_window, bg='white')
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        # 标题
+        title_label = tk.Label(main_frame, text="🏆 Game Rankings - 2008 Original", 
+                              font=self.font_title, bg='white', fg='#2c3e50')
+        title_label.pack(pady=(0, 20))
+        
+        # 当前玩家排名
+        if current_ranking:
+            rank_text = f"👤 {self.player_name}'s Ranking: #{current_ranking} / {total_players} players\nReturn Rate: {current_rr:.2f}%"
+            rank_color = '#27ae60' if current_rr > 0 else '#e74c3c'
+        else:
+            rank_text = f"👤 {self.player_name}: No ranking data available"
+            rank_color = '#7f8c8d'
+        
+        current_rank_label = tk.Label(main_frame, text=rank_text, 
+                                     font=("Microsoft YaHei", 16), 
+                                     bg='white', fg=rank_color)
+        current_rank_label.pack(pady=(0, 20))
+        
+        # 分隔线
+        separator = tk.Frame(main_frame, height=2, bg='#bdc3c7')
+        separator.pack(fill=tk.X, pady=(0, 20))
+        
+        # 排行榜标题
+        top5_label = tk.Label(main_frame, text="🥇 Top 5 Players", 
+                             font=("Microsoft YaHei", 18, "bold"), 
+                             bg='white', fg='#2c3e50')
+        top5_label.pack(pady=(0, 15))
+        
+        # 排行榜内容
+        if not df.empty:
+            # 按回报率排序并去重（每个玩家只显示最佳成绩）
+            df_best = df.loc[df.groupby('player_name')['return_rate'].idxmax()]
+            df_sorted = df_best.sort_values('return_rate', ascending=False).head(5)
+            
+            # 创建排行榜框架
+            ranking_frame = tk.Frame(main_frame, bg='white')
+            ranking_frame.pack(fill=tk.BOTH, expand=True)
+            
+            medals = ['🥇', '🥈', '🥉', '🏅', '🏅']
+            colors = ['#ffd700', '#c0c0c0', '#cd7f32', '#4a90e2', '#4a90e2']
+            
+            for idx, (_, row) in enumerate(df_sorted.iterrows()):
+                medal = medals[idx] if idx < len(medals) else f"#{idx+1}"
+                color = colors[idx] if idx < len(colors) else '#7f8c8d'
+                
+                # 每个排名的框架
+                rank_frame = tk.Frame(ranking_frame, bg='white')
+                rank_frame.pack(fill=tk.X, pady=5)
+                
+                # 排名文本
+                rank_text = f"{medal} {row['player_name']:>15} | Return: {row['return_rate']:>8.2f}% | Balance: ${row['final_balance']:>10,.2f}"
+                
+                rank_label = tk.Label(rank_frame, text=rank_text, 
+                                     font=("Courier New", 14, "bold" if idx < 3 else "normal"),
+                                     bg='white', fg=color, anchor='w')
+                rank_label.pack(fill=tk.X)
+        else:
+            no_data_label = tk.Label(main_frame, text="No ranking data available yet.", 
+                                   font=self.font_big, bg='white', fg='#7f8c8d')
+            no_data_label.pack()
+        
+        # 关闭按钮
+        close_btn = tk.Button(main_frame, text="Close", font=self.font_big, 
+                             command=ranking_window.destroy, width=15,
+                             bg='#3498db', fg='white', relief=tk.FLAT)
+        close_btn.pack(pady=(20, 0))
 
 #主程序入口
 if __name__ == "__main__":

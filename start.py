@@ -26,11 +26,32 @@ class TradingGameUI:
         buttons = tk.Frame(mainfarme)
         buttons.pack(anchor="w", pady=4)
 
-        tk.Button(buttons, text="Start New Game (2008 Original)", font=self.font_big, command=self.start_new_game, width=20).grid(row=0, column=0, padx=4, pady=4)
+        tk.Button(buttons, text="Start New Game (2008 Original)", font=self.font_big, command=self.name_collecter_original, width=20).grid(row=0, column=0, padx=4, pady=4)
         tk.Button(buttons, text="Start New Game (Random Price Changing)", font=self.font_big, command=self.name_collecter, width=20).grid(row=1, column=0, padx=4, pady=4)
 
         tk.Button(buttons, text="Game Ranking", font=self.font_big, command=self.game_ranking, width=20).grid(row=2, column=0, padx=4, pady=4)
         tk.Button(buttons, text="Exit Game", font=self.font_big, command=self.exit_game, width=20).grid(row=3, column=0, padx=4, pady=4)
+
+    def name_collecter_original(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        
+        frame = tk.Frame(self.root)
+        frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=80, pady=40)
+
+        mainfarme = tk.LabelFrame(frame, text="Player Name (2008 Original)", font=self.font_title, padx=8, pady=8)
+        mainfarme.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 8))
+
+        self.entry_widget_original=tk.Text(mainfarme, width=50, height=1)
+        self.entry_widget_original.pack(padx=10, pady=10)
+        self.entry_widget_original.insert("1.0", "Unknown") 
+
+        
+        buttons = tk.Frame(mainfarme)
+        buttons.pack(anchor="w", pady=4)
+
+        btn=tk.Button(buttons, text="Submit", font=self.font_big, command=self.start_new_game, width=20)
+        btn.grid(row=0, column=0, padx=4, pady=4)
 
     def name_collecter(self):
         for widget in self.root.winfo_children():
@@ -55,10 +76,23 @@ class TradingGameUI:
 
 
     def start_new_game(self):
-        root = tk.Tk()
-        app = game.TradingGameUI(root)
-        root.mainloop()
-        self.root.destroy()
+        name=self.entry_widget_original.get("1.0", "end-1c")
+        if len(name) < 3:
+            if self.r is not None:
+                self.r.destroy()
+                self.r = tk.Tk()
+            else:
+                self.r = tk.Tk()
+            msg = tk.Label(self.r, text="Invalid Name", font=self.font_title, padx=8, pady=8)
+            msg.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 8))
+            return
+        else:
+            if self.r is not None:
+                self.r.destroy()
+            for widget in self.root.winfo_children():
+                widget.destroy()
+            app = game.TradingGameUI(self.root, name)
+            self.root.mainloop()
         return
     
     def start_new_harder_game(self):
@@ -69,9 +103,9 @@ class TradingGameUI:
                 self.r = tk.Tk()
             else:
                 self.r = tk.Tk()
-            msg = tk.Label(self.r, text="Invaild Name", font=self.font_title, padx=8, pady=8)
+            msg = tk.Label(self.r, text="Invalid Name", font=self.font_title, padx=8, pady=8)
             msg.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 8))
-            # print("Invaild Name")
+            # print("Invalid Name")
             return
         else:
             if self.r is not None:

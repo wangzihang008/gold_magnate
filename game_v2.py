@@ -32,12 +32,13 @@ NEWS = {
 
 # Account
 class Account:
-    def __init__(self, initial_balance=100000.0, lot_size=1):
+    def __init__(self, initial_balance=100000.0, lot_size=1, name="unknown"):
         self.initial_balance = float(initial_balance)
         self.balance = float(initial_balance)
         self.position = 0  
         self.entry_price = 0.0
         self.lot_size = lot_size 
+        self.name = name
 
     def buy(self, price, quantity):
         if self.position != 0:
@@ -82,9 +83,12 @@ class Account:
 
 # Main Frame
 class TradingGameUI:
-    def __init__(self, root):
+    def __init__(self, root, name):
         self.root = root
-        self.root.title("Gold Magnate 2008")
+        self.root.title(name+" - Gold Magnate 2008")
+
+        self.player_name = name
+        # print(self.player_name)
 
         self.font_big = ("Microsoft YaHei", 18)
         self.font_title = ("Microsoft YaHei", 20, "bold")
@@ -158,7 +162,7 @@ class TradingGameUI:
                     index+=1
 
                 self.price_df.to_csv(cache_file)
-                print(self.news_map)
+                # print(self.news_map)
                 # exit(0)
             except Exception as e:
                 messagebox.showerror("Data Load Failed", f"Cannot Load Data: {e}")

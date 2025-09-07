@@ -205,10 +205,10 @@ class TradingGameUI:
         tk.Label(trade, text="Note: Set a 10% margin; close any position before opening it again.", font=("Microsoft YaHei", 12)).pack(anchor="w", pady=(6, 0))
 
         pf = tk.Frame(trade)
-        pf.pack(anchor="w", pady=4)
+        pf.pack(anchor="center", pady=4)
 
-        tk.Button(pf, text="Profit", font=self.font_big, command=self.getProfitChart, width=10).grid(row=0, column=0, padx=4, pady=4)
-        tk.Button(pf, text="History", font=self.font_big, command=self.getProfitChart, width=10).grid(row=0, column=1, padx=4, pady=4)
+        tk.Button(pf, text="Profit", font=self.font_big, command=self.getProfitChart, width=20).grid(row=0, column=0, padx=4, pady=4)
+        
         
         chart_frame = tk.LabelFrame(mid, text="Gold Price Chart", font=self.font_title, padx=8, pady=8)
         chart_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)

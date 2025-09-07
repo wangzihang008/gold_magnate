@@ -497,18 +497,28 @@ Good luck, and may you become a Gold Magnate!
     def buy_action(self):
         qty = self._get_qty()
         if qty is None:
-            return
+           return
+    # Check if qty is a positive integer 
+        if not isinstance(qty, int) or qty <= 0:
+           messagebox.showwarning("Invalid enter, please enter a positive integer.")
+           return
+
         price, day = self._current_trade_price()
         msg, ok = self.account.buy(price, qty)
         if ok:
-            self.log(f"{day.strftime('%Y-%m-%d')} long {qty} lots @ {price:.2f} → {msg}")
-            self.refresh_top_panel(price, day)
+          self.log(f"{day.strftime('%Y-%m-%d')} long {qty} lots @ {price:.2f} → {msg}")
+          self.refresh_top_panel(price, day)
         else:
-            messagebox.showerror("Transaction Failure", msg)
+           messagebox.showerror("Transaction Failure", msg)
+
 
     def sell_action(self):
         qty = self._get_qty()
         if qty is None:
+            return
+      # Check if qty is a positive integer 
+        if not isinstance(qty, int) or qty <= 0:
+            messagebox.showwarning("Invalid enter, please enter a positive integer.")
             return
         price, day = self._current_trade_price()
         msg, ok = self.account.sell(price, qty)
@@ -521,11 +531,16 @@ Good luck, and may you become a Gold Magnate!
     def close_action(self):
         price, day = self._current_trade_price()
         msg, pnl = self.account.close_position(price)
+
         if "No positions" in msg:
-            messagebox.showerror("Transaction Failure", msg)
+           messagebox.showerror(
+            "Transaction Failure",
+            f"{msg}\n You must open a long or short position first."
+        )
         else:
-            self.log(f"{day.strftime('%Y-%m-%d')} close a position @ {price:.2f} → {msg}")
-            self.refresh_top_panel(price, day)
+             self.log(f"{day.strftime('%Y-%m-%d')} close a position @ {price:.2f} → {msg}")
+             self.refresh_top_panel(price, day)
+
 
     # ---------- 盈亏历史小窗 ----------
     def drawChart(self):

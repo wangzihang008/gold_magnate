@@ -169,7 +169,87 @@ class TradingGameUI:
         except Exception as e:
             messagebox.showwarning("News loading warning", f"Failed to read my_news.json: {e}")
 
+    def show_help_window(self):
+        """Creates a new window to display the game tutorial."""
+        help_win = tk.Toplevel(self.root)
+        help_win.title("Game Tutorial")
+        help_win.geometry("700x650")
+
+        help_text = """
+Gold Magnate 2008 - Game Tutorial
+
+Welcome to Gold Magnate 2008! 
+You can access this tutorial at any time by navigating to Menu > Help in the top menu bar.
+---------------------------------------------------------------------
+
+This is a trading simulation game where you trade gold futures based on the historical price data from the year 2008. Your goal is to maximize your profit by the end of the year.
+
+**1. Game Interface Overview**
+
+The main screen is divided into four key areas:
+
+* **Top Panel (Account and Market):**
+    * `Account Balance`: Shows your current available cash. A 10% margin will be deducted from this when you open a position.
+    * `Position`: Displays your current trade. "None" means you have no open trades. "Long" means you've bought, expecting the price to go up. "Short" means you've sold, expecting the price to go down. It also shows the quantity and your entry price.
+    * `Floating Profit and Loss`: Shows the unrealized profit or loss on your current open position. It's green for profit and red for loss.
+    * `Date and Current Price`: Shows the current in-game date and the corresponding gold price.
+
+* **Middle-Left Panel (Trading Operation):**
+    * `Transaction quantity (lots)`: Enter the number of lots you wish to trade here.
+    * `Buy (long)`: Click this to open a long position. You profit if the price goes up.
+    * `Sell (short)`: Click this to open a short position. You profit if the price goes down.
+    * `Close a position`: Click this to close your current open position and realize any profit or loss.
+    * `Profit / History`: Click to view a chart of your total profit over time.
+    * *Note*: You must close any existing position before you can open a new one.
+
+* **Middle-Right Panel (Gold Price Chart):**
+    * This chart visually represents the gold price over time. Use it to identify trends and make trading decisions.
+
+* **Bottom Panels (Logs and News):**
+    * `Operation Record`: A log of all your trading actions (buy, sell, close).
+    * `Important news of the day`: Displays major financial news for the current day. This news can significantly impact the gold price. Pay close attention to it!
+
+**2. How to Play**
+
+1.  **Start:** The game starts automatically with an initial balance of $100,000. The timeline will begin to advance automatically.
+
+2.  **Analyze:** Watch the price movement on the chart and read the daily news. Decide if you think the price will go up or down.
+
+3.  **Enter Quantity:** Type the number of lots you want to trade into the `Transaction quantity` box.
+
+4.  **Open a Position:**
+    * If you believe the price will rise, click `Buy (long)`.
+    * If you believe the price will fall, click `Sell (short)`.
+
+5.  **Manage Your Position:** As the game progresses, your `Floating Profit and Loss` will update.
+
+6.  **Close Your Position:** When you are ready to exit your trade, click `Close a position`. Your profit or loss will be added to your account balance, and the margin used for the trade will be returned.
+
+7.  **Repeat:** Continue to analyze the market and make trades throughout the year.
+
+**3. End of the Game**
+
+The game automatically ends when the timeline reaches the end of the year 2008. Any open positions will be automatically closed at the final market price. A summary of your performance will be displayed, and your score will be saved to the leaderboard.
+
+Good luck, and may you become a Gold Magnate!
+        """
+        
+        txt_help = scrolledtext.ScrolledText(help_win, font=("Microsoft YaHei", 12), wrap=tk.WORD)
+        txt_help.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        txt_help.insert(tk.END, help_text)
+        txt_help.config(state=tk.DISABLED)
+
+
     def build_ui(self):
+        # --- Add Menu Bar ---
+        menubar = tk.Menu(self.root)
+        self.root.config(menu=menubar)
+
+        menu_dropdown = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Menu", menu=menu_dropdown, font=self.font_menu)
+        menu_dropdown.add_command(label="Help", command=self.show_help_window, font=self.font_menu)
+        # --- End Menu Bar ---
+
         top = tk.LabelFrame(self.root, text="Account and Market", font=self.font_title, padx=8, pady=8)
         top.pack(side=tk.TOP, fill=tk.X, padx=8, pady=(8, 4))
 

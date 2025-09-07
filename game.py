@@ -85,6 +85,7 @@ class TradingGameUI:
 
         self.font_big = ("Microsoft YaHei", 18)
         self.font_title = ("Microsoft YaHei", 20, "bold")
+        self.font_menu = ("Microsoft YaHei", 14) # 新增菜单字体
 
         self.account = Account(initial_balance=100000.0, lot_size=1, name=self.player_name)
         self.price_df = pd.DataFrame()

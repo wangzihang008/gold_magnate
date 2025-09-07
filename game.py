@@ -377,32 +377,39 @@ class TradingGameUI:
         
         self.drawChart()
         
-    #结束结算
     def end_game(self):
         self.timer_running = False
         last_price = float(self.price_df.iloc[-1]['Close'])
         if self.account.position != 0:
-            msg, pnl = self.account.close_position(last_price)
-            self.log(f"Automatically close a position (last day @ {last_price:.2f}): {msg}")
+           msg, pnl = self.account.close_position(last_price)
+           self.log(f"Automatically close a position (last day @ {last_price:.2f}): {msg}")
 
         final_balance = self.account.balance
         pl = final_balance - self.account.initial_balance
         rr = (pl / self.account.initial_balance) * 100.0
 
+    # 保存游戏结果
         df = self.save_game_result(final_balance, pl, rr)
-        
-        # 获取排名信息
+
+    # 获取排名信息
         current_ranking, total_players = self.get_player_ranking(df)
-        
-        # 显示游戏结束信息
-        result_msg = f"Final account balance: {final_balance:.2f}\nTotal profit and loss: {pl:.2f}\nReturn on investment: {rr:.2f}%"
+
+    # 构造提示信息
+        result_msg = (
+                   f"Final account balance: {final_balance:.2f}\n"
+                   f"Total profit and loss: {pl:.2f}\n"
+                   f"Return on investment: {rr:.2f}%"
+        )
         if current_ranking:
-            result_msg += f"\n\nYour Ranking: #{current_ranking} out of {total_players} players!"
-            
+           result_msg += f"\n\nYour Ranking: #{current_ranking} out of {total_players} players!"
+
+    # 弹窗提示
         messagebox.showinfo("Game over", result_msg)
 
+    # 展示排行榜
         self.show_rankings(df, current_ranking, total_players, rr)
-        
+
+    # 关闭窗口
         self.root.quit()
 
     def save_game_result(self, final_balance, pl, rr):
@@ -533,6 +540,35 @@ class TradingGameUI:
 
 #主程序入口
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = TradingGameUI(root)
-    root.mainloop()
+    import sys
+    # 可在终端中输入‘python game.py test’来测试以下功能是否能成功实现
+    
+    if "test" in sys.argv:
+        print("Tests begin.")
+        acc = Account(initial_balance=10000, lot_size=1)
+        
+        # 测试买入
+        msg, ok = acc.buy(1000, 1)
+        print("Buy Test:", msg, "OK?" , ok, "Balance:", acc.balance)
+
+        # 测试浮盈亏
+        pnl = acc.floating_pnl(1010)
+        print("Floating Profit and Loss:", pnl)
+
+        # 测试平仓
+        msg, pnl = acc.close_position(1020)
+        print("Close Test:", msg, "Profit and Loss:", pnl, "Balance:", acc.balance)
+        
+        # 测试卖出
+        msg, ok = acc.sell(950, 2)
+        print("Sell Test:", msg, "OK?", ok, "Balance:", acc.balance)
+
+        msg, pnl = acc.close_position(940)
+        print("Close Short:", msg, "Profit and Loss:", pnl, "Balance:", acc.balance)
+
+        print("Tests finish.")
+    else:
+        root = tk.Tk()
+        app = TradingGameUI(root)
+        root.mainloop()
+

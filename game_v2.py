@@ -450,6 +450,35 @@ class TradingGameUI:
 
 # Main function
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = TradingGameUI(root)
-    root.mainloop()
+    import sys
+    #Testing
+    if "test" in sys.argv:
+        print("Tests begin.")
+        acc = Account(initial_balance=10000, lot_size=1, name="Tester")
+        
+        # Test Purchase
+        msg, ok = acc.buy(1000, 1)
+        print("Buy Test:", msg, "OK?", ok, "Balance:", acc.balance)
+        
+        # Testing Floating Profit and Loss
+        pnl = acc.floating_pnl(1010)
+        print("Floating Profit and Loss:", pnl)
+        
+        # Test Position Closing
+        msg, pnl = acc.close_position(1020)
+        print("Close Test:", msg, "Profit and Loss:", pnl, "Balance:", acc.balance)
+        
+        # Test Sale
+        msg, ok = acc.sell(950, 2)
+        print("Sell Short Test:", msg, "OK?", ok, "Balance:", acc.balance)
+        
+        # Test closing short positions
+        msg, pnl = acc.close_position(940)
+        print("Close Short:", msg, "Profit and Loss:", pnl, "Balance:", acc.balance)
+        
+        print("Tests Finish.")
+    else:
+        root = tk.Tk()
+        app = TradingGameUI(root, name="Player1")
+        root.mainloop()
+

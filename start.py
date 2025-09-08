@@ -1,6 +1,7 @@
 import game
 import game_v2
-
+import os
+import pandas as pd
 import tkinter as tk
 
 
@@ -77,7 +78,7 @@ class TradingGameUI:
 
     def start_new_game(self):
         name=self.entry_widget_original.get("1.0", "end-1c")
-        if len(name) < 3:
+        if len(name) < 1:
             if self.r is not None:
                 self.r.destroy()
                 self.r = tk.Tk()

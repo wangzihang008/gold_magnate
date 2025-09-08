@@ -306,6 +306,7 @@ Good luck, and may you become a Gold Magnate!
         menu_dropdown = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Menu", menu=menu_dropdown, font=self.font_menu)
         menu_dropdown.add_command(label="Help", command=self.show_help_window, font=self.font_menu)
+        menu_dropdown.add_command(label="Rankings", command=self.show_in_game_rankings, font=self.font_menu)
         # --- End Menu Bar ---
 
     # ---------- UI ----------
@@ -378,6 +379,107 @@ Good luck, and may you become a Gold Magnate!
         news_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         self.txt_news = scrolledtext.ScrolledText(news_frame, height=10, font=self.font_big, state=tk.DISABLED, wrap=tk.WORD)
         self.txt_news.pack(fill=tk.BOTH, expand=True)
+
+    def show_in_game_rankings(self):
+        """在游戏中显示排名查询窗口"""
+        csv_file = "game_rankings_2008.csv"
+        
+        # 创建排行榜窗口
+        ranking_window = tk.Toplevel(self.root)
+        ranking_window.title("Live Rankings - 2008 Original")
+        ranking_window.geometry("650x450")
+        ranking_window.configure(bg='white')
+        
+        # 设置窗口图标和属性
+        ranking_window.transient(self.root)  # 设置为主窗口的子窗口
+        ranking_window.grab_set()  # 模态窗口
+        
+        # 主框架
+        main_frame = tk.Frame(ranking_window, bg='white')
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        
+        # 标题
+        title_label = tk.Label(main_frame, text="Top 5 Players - 2008 Gold Trading", 
+                              font=("Microsoft YaHei", 18, "bold"), bg='white', fg='#2c3e50')
+        title_label.pack(pady=(0, 15))
+        
+        # 检查是否有数据
+        if os.path.exists(csv_file):
+            try:
+                df = pd.read_csv(csv_file)
+                if not df.empty:
+                    # 按回报率排序并去重（每个玩家只显示最佳成绩）
+                    df_best = df.loc[df.groupby('player_name')['return_rate'].idxmax()]
+                    df_sorted = df_best.sort_values('return_rate', ascending=False).head(5)
+                    
+                    # 创建排行榜内容框架
+                    content_frame = tk.Frame(main_frame, bg='white')
+                    content_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
+                    
+                    # 表头
+                    header_frame = tk.Frame(content_frame, bg='#34495e', height=40)
+                    header_frame.pack(fill=tk.X, pady=(0, 2))
+                    header_frame.pack_propagate(False)
+                    
+                    header_text = "Rank   Player Name          Return Rate      Final Balance"
+                    header_label = tk.Label(header_frame, text=header_text, 
+                                          font=("Courier New", 12, "bold"),
+                                          bg='#34495e', fg='white', anchor='w')
+                    header_label.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+                    
+                    # 排行榜条目
+                    bg_colors = ['#fff9c4', '#f0f0f0', '#ffeaa7', '#ddd', '#ddd']
+                    
+                    for idx, (_, row) in enumerate(df_sorted.iterrows()):
+                        rank_frame = tk.Frame(content_frame, bg=bg_colors[idx], height=35)
+                        rank_frame.pack(fill=tk.X, pady=1)
+                        rank_frame.pack_propagate(False)
+                        
+                        # 格式化显示文本
+                        rank_num = f"#{idx + 1}"
+                        player_name = str(row['player_name'])[:16]  # 限制长度
+                        return_rate = f"{row['return_rate']:+6.2f}%"
+                        balance = f"${row['final_balance']:>13,.0f}"
+                        
+                        rank_text = f"{rank_num:<6} {player_name:<16} {return_rate:>12} {balance:>16}"
+                        
+                        rank_label = tk.Label(rank_frame, text=rank_text, 
+                                            font=("Courier New", 11, "bold" if idx < 3 else "normal"),
+                                            bg=bg_colors[idx], fg='#2c3e50', anchor='w')
+                        rank_label.pack(fill=tk.BOTH, expand=True, padx=10, pady=2)
+                    
+
+                        
+                else:
+                    no_data_label = tk.Label(main_frame, text="No ranking data available yet.\nComplete a game to see rankings!", 
+                                           font=self.font_big, bg='white', fg='#7f8c8d')
+                    no_data_label.pack(expand=True)
+                    
+            except Exception as e:
+                error_label = tk.Label(main_frame, text=f"Error loading ranking data:\n{str(e)}", 
+                                     font=self.font_big, bg='white', fg='#e74c3c')
+                error_label.pack(expand=True)
+        else:
+            no_file_label = tk.Label(main_frame, text="No ranking file found.\nComplete a game to create the leaderboard!", 
+                                   font=self.font_big, bg='white', fg='#7f8c8d')
+            no_file_label.pack(expand=True)
+        
+        # 按钮框架
+        btn_frame = tk.Frame(main_frame, bg='white')
+        btn_frame.pack(side=tk.BOTTOM, fill=tk.X)
+        
+        # 刷新按钮
+        refresh_btn = tk.Button(btn_frame, text="Refresh", font=("Microsoft YaHei", 12), 
+                               command=lambda: [ranking_window.destroy(), self.show_in_game_rankings()], 
+                               width=10, bg='#27ae60', fg='white', relief=tk.FLAT)
+        refresh_btn.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # 关闭按钮
+        close_btn = tk.Button(btn_frame, text="Close", font=("Microsoft YaHei", 12), 
+                             command=ranking_window.destroy, width=10,
+                             bg='#3498db', fg='white', relief=tk.FLAT)
+        close_btn.pack(side=tk.RIGHT)
+        
 
     # ---------- 日志 ----------
     def log(self, msg: str):

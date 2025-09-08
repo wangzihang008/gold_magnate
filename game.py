@@ -437,7 +437,7 @@ Good luck, and may you become a Gold Magnate!
                         
                         # 格式化显示文本
                         rank_num = f"#{idx + 1}"
-                        player_name = str(row['player_name'])[:16]  # 限制长度
+                        player_name = str(row['player_name'])[:16]
                         return_rate = f"{row['return_rate']:+6.2f}%"
                         balance = f"${row['final_balance']:>13,.0f}"
                         

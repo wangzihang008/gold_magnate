@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 import random
+from datetime import datetime
 
 # Make sure Chinese characters / symbols render correctly across platforms
 matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'Arial Unicode MS', 'Arial']
@@ -172,13 +173,14 @@ class TradingGameUI:
     - Advances the timeline, potentially triggering random news and price adjustments.
     - Provides trading operations (buy, sell, close).
     - Tracks and plots profit history; shows daily news with coloring cues.
+    - Persists results to `ranking.csv` and displays a leaderboard.
     """
 
     def __init__(self, root, name: str = "Player"):
         """
         Args:
             root: tk.Tk root window.
-            name (str): Player name to be displayed in the final summary.
+            name (str): Player name to be displayed in the final summary and leaderboard.
         """
         self.root = root
         self.root.title("Gold Magnate Game 2008")
@@ -295,7 +297,7 @@ class TradingGameUI:
 
     # ---------- UI ----------
     def build_ui(self):
-        """Create all UI widgets: top info panel, trading panel, chart, log, and news box."""
+        """Create all UI widgets: top info panel, trading panel, chart, log, news, and leaderboard button."""
         # Top: account & market info
         top = tk.LabelFrame(self.root, text="Account and Market", font=self.font_title, padx=8, pady=8)
         top.pack(side=tk.TOP, fill=tk.X, padx=8, pady=(8, 4))
@@ -343,7 +345,7 @@ class TradingGameUI:
         pf.pack(anchor="w", pady=4)
         tk.Button(pf, text="Profit",  font=self.font_big, command=self.getProfitChart, width=10)\
             .grid(row=0, column=0, padx=4, pady=4)
-        tk.Button(pf, text="History", font=self.font_big, command=self.getProfitChart, width=10)\
+        tk.Button(pf, text="Leaderboard", font=self.font_big, command=self.show_leaderboard, width=12)\
             .grid(row=0, column=1, padx=4, pady=4)
 
         chart_frame = tk.LabelFrame(mid, text="Gold Price Chart", font=self.font_title, padx=8, pady=8)
@@ -564,11 +566,126 @@ class TradingGameUI:
         self.canvas2.get_tk_widget().pack(fill=tk.BOTH, expand=True)
         self.drawChart()
 
+    # ---------- Leaderboard (Ranking) ----------
+    def show_leaderboard(self):
+        """Open a popup window to show the leaderboard loaded from `ranking.csv` (if any)."""
+        win = tk.Toplevel(self.root)
+        win.title("Leaderboard")
+        win.geometry("760x520")
+        main_frame = tk.Frame(win, bg="white")
+        main_frame.pack(fill=tk.BOTH, expand=True)
+
+        df_rank = self._load_ranking_df()
+
+        # podium / row colors (top 3 highlighted)
+        bg_colors = ["#f1c40f", "#bdc3c7", "#e67e22"] + ["white"] * 100
+
+        self.render_leaderboard(main_frame, df_rank, bg_colors)
+
+    def _load_ranking_df(self) -> pd.DataFrame | None:
+        """
+        Load and sort ranking data from `ranking.csv` if the file exists.
+
+        Expected columns:
+            player_name (str), final_balance (float), return_rate (float), end_time (str)
+        Returns:
+            pd.DataFrame | None
+        """
+        file = "ranking.csv"
+        if not os.path.exists(file):
+            return None
+        try:
+            df = pd.read_csv(file)
+            # Ensure required columns exist
+            for col in ["player_name", "final_balance", "return_rate"]:
+                if col not in df.columns:
+                    raise ValueError(f"Column '{col}' missing in ranking.csv")
+            # Sort by return_rate descending, then balance
+            df = df.sort_values(["return_rate", "final_balance"], ascending=[False, False]).reset_index(drop=True)
+            return df
+        except Exception as e:
+            # Show an empty DataFrame with error captured in UI layer
+            print("Failed to load ranking:", e)
+            return None
+
+    def render_leaderboard(self, main_frame: tk.Frame, df_rankings: pd.DataFrame, bg_colors: list[str]):
+        """
+        Part 9 — comments/meaningful names
+        ----------------------------------
+        Render the leaderboard panel.
+
+        Args:
+            main_frame (tk.Frame): The parent container to hold the leaderboard UI.
+            df_rankings (pd.DataFrame): Ranking data with columns:
+                - 'player_name' (str)
+                - 'return_rate' (float, percentage, e.g. 5.23 means +5.23%)
+                - 'final_balance' (float, ending cash balance)
+            bg_colors (list[str]): Background colors to highlight top rows
+                                   (e.g., first 3 for podium).
+        """
+        # Clear previous content
+        for child in main_frame.winfo_children():
+            child.destroy()
+
+        try:
+            if df_rankings is not None and len(df_rankings) > 0:
+                header = tk.Label(
+                    main_frame,
+                    text=f"{'#':<6} {'Player':<16} {'Return':>12} {'Final Balance':>16}",
+                    font=("Courier New", 12, "bold"),
+                    bg="white",
+                    fg="#2c3e50",
+                    anchor="w",
+                )
+                header.pack(fill=tk.X, padx=10, pady=(8, 4))
+
+                rank_frame = tk.Frame(main_frame, bg="white")
+                rank_frame.pack(fill=tk.BOTH, expand=True)
+
+                for idx, row in df_rankings.reset_index(drop=True).iterrows():
+                    # Format display text
+                    rank_num = f"#{idx + 1}"
+                    player_name = str(row['player_name'])[:16]  # truncate to fit
+                    return_rate = f"{row['return_rate']:+6.2f}%"
+                    balance = f"${row['final_balance']:>13,.0f}"
+
+                    # Fixed-width aligned row
+                    rank_text = f"{rank_num:<6} {player_name:<16} {return_rate:>12} {balance:>16}"
+
+                    font_weight = "bold" if idx < 3 else "normal"
+                    row_bg = bg_colors[idx] if idx < len(bg_colors) else "white"
+
+                    rank_label = tk.Label(
+                        rank_frame,
+                        text=rank_text,
+                        font=("Courier New", 11, font_weight),
+                        bg=row_bg,
+                        fg="#2c3e50",
+                        anchor='w'
+                    )
+                    rank_label.pack(fill=tk.BOTH, expand=True, padx=10, pady=2)
+
+            else:
+                no_data_label = tk.Label(
+                    main_frame,
+                    text="No ranking data available yet.\nComplete a game to see rankings!",
+                    font=self.font_big, bg='white', fg='#7f8c8d'
+                )
+                no_data_label.pack(expand=True)
+
+        except Exception as e:
+            error_label = tk.Label(
+                main_frame,
+                text=f"Error loading ranking data:\n{str(e)}",
+                font=self.font_big, bg='white', fg='#e74c3c'
+            )
+            error_label.pack(expand=True)
+
     # ---------- End-of-game settlement ----------
     def end_game(self):
         """
         Stop the timer, force-close any open position at the last price,
-        compute final performance, show a summary dialog, and exit.
+        compute final performance, persist to leaderboard, show a summary, and exit.
         """
         self.timer_running = False
         last_price = float(self.price_df.iloc[-1]['Close'])
@@ -579,6 +696,22 @@ class TradingGameUI:
         final_balance = self.account.balance
         pl = final_balance - self.account.initial_balance
         rr = (pl / self.account.initial_balance) * 100.0
+
+        # Persist to ranking.csv (append mode)
+        try:
+            row = pd.DataFrame([{
+                "player_name": self.player_name,
+                "final_balance": round(final_balance, 2),
+                "return_rate": round(rr, 2),
+                "end_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }])
+            file = "ranking.csv"
+            if os.path.exists(file):
+                row.to_csv(file, mode="a", index=False, header=False)
+            else:
+                row.to_csv(file, index=False)
+        except Exception as e:
+            self.log(f"Warning: failed to write ranking.csv → {e}")
 
         news_review = ("\n\nNews Review:\n" + "\n".join(self.news_history)) if self.news_history \
                       else "\n\n(No major random news was triggered during the game.)"

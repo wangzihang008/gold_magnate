@@ -13,12 +13,20 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 import random
 
+<<<<<<< Updated upstream
 # Make sure Chinese characters / symbols render correctly across platforms
+=======
+# Ensure Chinese characters/symbols can display normally on different systems
+>>>>>>> Stashed changes
 matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'Arial Unicode MS', 'Arial']
 matplotlib.rcParams['axes.unicode_minus'] = False
 
 
+<<<<<<< Updated upstream
 # =============== Built-in historical events (display only; DO NOT alter price) ===============
+=======
+# =============== Built-in historical events (display only, do not change price) ===============
+>>>>>>> Stashed changes
 BUILTIN_NEWS = {
     "2008-09-07": "The US government takes over Fannie Mae and Freddie Mac, risk aversion rises. (Bullish for gold)",
     "2008-09-15": "Lehman Brothers bankruptcy triggers global financial crisis. (Strongly bullish for gold)",
@@ -26,7 +34,11 @@ BUILTIN_NEWS = {
     "2008-09-29": "The US House rejects $700 billion bailout bill. (Strongly bullish for gold)",
 }
 
+<<<<<<< Updated upstream
 # =============== Random breaking news pool: (text, direction, impact_text, weight) ===============
+=======
+# =============== Random breaking news pool (text, direction, impact, weight) ===============
+>>>>>>> Stashed changes
 RANDOM_NEWS_POOL = [
     ("Central bank unexpectedly cuts interest rates.",                 "bullish",        "+1%", 10),
     ("Major bank reports massive losses, market panic rises.",         "strong_bullish", "+2%", 5),
@@ -38,6 +50,7 @@ RANDOM_NEWS_POOL = [
     ("US unemployment rate falls unexpectedly.",                       "bearish",        "-1%", 10),
     ("Large fund forced liquidation sparks market turbulence.",        "strong_bearish", "-2%", 4),
 ]
+<<<<<<< Updated upstream
 
 
 def apply_news_impact(price: float, impact: str) -> float:
@@ -91,6 +104,47 @@ class Account:
 
         Returns:
             tuple[str, bool]: (message, success_flag)
+=======
+
+def apply_news_impact(price: float, impact: str) -> float:
+    """
+    Adjust price based on news impact.
+
+    Args:
+        price (float): The current price of gold.
+        impact (str): One of ['bullish', 'strong_bullish', 'bearish', 'strong_bearish'].
+
+    Returns:
+        float: Updated price after applying news impact.
+    """
+    if impact == "bullish":
+        return price * 1.01
+    if impact == "strong_bullish":
+        return price * 1.02
+    if impact == "bearish":
+        return price * 0.99
+    if impact == "strong_bearish":
+        return price * 0.98
+    return price
+
+
+# =============== Account class ===============
+class Account:
+    """
+    Represents a trading account. Tracks balance, positions, and profit/loss.
+    """
+    def __init__(self, initial_balance=100000.0, lot_size=1, name="Player"):
+        self.name = str(name)
+        self.initial_balance = float(initial_balance)
+        self.balance = float(initial_balance)
+        self.position = 0                 # >0 long; <0 short; =0 no position
+        self.entry_price = 0.0            # Last entry price
+        self.lot_size = lot_size
+
+    def buy(self, price, quantity):
+        """
+        Open a long position.
+>>>>>>> Stashed changes
         """
         if self.position != 0:
             return "Existing a position, please close first.", False
@@ -99,6 +153,7 @@ class Account:
             self.position = quantity
             self.entry_price = price
             self.balance -= margin
+<<<<<<< Updated upstream
             return (f"Successfully long {quantity} lots @ {price:.2f}, "
                     f"margin used: {margin:.2f}."), True
         return "Insufficient funds to open a position.", False
@@ -109,6 +164,14 @@ class Account:
 
         Returns:
             tuple[str, bool]: (message, success_flag)
+=======
+            return f"Successfully long {quantity} lots @ {price:.2f}, margin used: {margin:.2f}.", True
+        return "Insufficient funds to open a position.", False
+
+    def sell(self, price, quantity):
+        """
+        Open a short position.
+>>>>>>> Stashed changes
         """
         if self.position != 0:
             return "Existing a position, please close first.", False
@@ -117,6 +180,7 @@ class Account:
             self.position = -quantity
             self.entry_price = price
             self.balance -= margin
+<<<<<<< Updated upstream
             return (f"Successfully short {quantity} lots @ {price:.2f}, "
                     f"margin used: {margin:.2f}."), True
         return "Insufficient funds to open a position.", False
@@ -141,29 +205,54 @@ class Account:
         gloProfit.set(gloProfit.get() + pnl)
 
         # release margin
+=======
+            return f"Successfully short {quantity} lots @ {price:.2f}, margin used: {margin:.2f}.", True
+        return "Insufficient funds to open a position.", False
+
+    def close_position(self, current_price):
+        """
+        Close the current position and update balance.
+        """
+        if self.position == 0:
+            return "No positions to close.", 0.0
+        pnl = (current_price - self.entry_price) * self.position * self.lot_size
+        self.balance += pnl
+        gloProfit.set(gloProfit.get() + pnl)  # Record realized PnL for profit history chart
+>>>>>>> Stashed changes
         margin_released = abs(self.entry_price * self.position * 0.1)
         self.balance += margin_released
 
         pos = self.position
         self.position = 0
         self.entry_price = 0.0
+<<<<<<< Updated upstream
         msg = (f"Position closed successfully ({'long' if pos > 0 else 'short'} {abs(pos)} lots)! "
+=======
+        msg = (f"Position closed successfully ({'long' if pos>0 else 'short'} {abs(pos)} lots)! "
+>>>>>>> Stashed changes
                f"Profit and loss for this period: {pnl:.2f}, released margin: {margin_released:.2f}. "
                f"Account balance: {self.balance:.2f}.")
         return msg, pnl
 
+<<<<<<< Updated upstream
     def floating_pnl(self, current_price: float) -> float:
         """
         Compute current unrealized P&L at `current_price`.
 
         Returns:
             float: Unrealized profit/loss (0 if flat).
+=======
+    def floating_pnl(self, current_price):
+        """
+        Calculate unrealized profit/loss.
+>>>>>>> Stashed changes
         """
         if self.position == 0:
             return 0.0
         return (current_price - self.entry_price) * self.position * self.lot_size
 
 
+<<<<<<< Updated upstream
 # =============== Main UI & Game Logic ===============
 class TradingGameUI:
     """
@@ -622,6 +711,26 @@ if __name__ == "__main__":
         print("Close Short:", msg, "Profit and Loss:", pnl, "Balance:", acc.balance)
 
         print("Tests Finish.")
+=======
+# =============== TradingGameUI: Main UI and Game Logic ===============
+class TradingGameUI:
+    """
+    Main class that controls the trading game, including UI, price updates, 
+    trading actions, and displaying news/events.
+    """
+    def __init__(self, root, name="Player"):
+        self.root = root
+        self.root.title("Gold Magnate Game 2008")
+        ...
+        # (rest of your class unchanged, except docstrings and comments translated above)
+        ...
+
+# =============== Main (with testing block) ===============
+if __name__ == "__main__":
+    # If started with "test" parameter: run account unit tests only; otherwise start the game
+    if "test" in sys.argv:
+        ...
+>>>>>>> Stashed changes
     else:
         root = tk.Tk()
         app = TradingGameUI(root, name="Player1")

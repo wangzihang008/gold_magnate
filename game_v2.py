@@ -12,21 +12,14 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 import random
+from datetime import datetime
 
-<<<<<<< Updated upstream
 # Make sure Chinese characters / symbols render correctly across platforms
-=======
-# Ensure Chinese characters/symbols can display normally on different systems
->>>>>>> Stashed changes
 matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'Arial Unicode MS', 'Arial']
 matplotlib.rcParams['axes.unicode_minus'] = False
 
 
-<<<<<<< Updated upstream
 # =============== Built-in historical events (display only; DO NOT alter price) ===============
-=======
-# =============== Built-in historical events (display only, do not change price) ===============
->>>>>>> Stashed changes
 BUILTIN_NEWS = {
     "2008-09-07": "The US government takes over Fannie Mae and Freddie Mac, risk aversion rises. (Bullish for gold)",
     "2008-09-15": "Lehman Brothers bankruptcy triggers global financial crisis. (Strongly bullish for gold)",
@@ -34,11 +27,7 @@ BUILTIN_NEWS = {
     "2008-09-29": "The US House rejects $700 billion bailout bill. (Strongly bullish for gold)",
 }
 
-<<<<<<< Updated upstream
 # =============== Random breaking news pool: (text, direction, impact_text, weight) ===============
-=======
-# =============== Random breaking news pool (text, direction, impact, weight) ===============
->>>>>>> Stashed changes
 RANDOM_NEWS_POOL = [
     ("Central bank unexpectedly cuts interest rates.",                 "bullish",        "+1%", 10),
     ("Major bank reports massive losses, market panic rises.",         "strong_bullish", "+2%", 5),
@@ -50,7 +39,6 @@ RANDOM_NEWS_POOL = [
     ("US unemployment rate falls unexpectedly.",                       "bearish",        "-1%", 10),
     ("Large fund forced liquidation sparks market turbulence.",        "strong_bearish", "-2%", 4),
 ]
-<<<<<<< Updated upstream
 
 
 def apply_news_impact(price: float, impact: str) -> float:
@@ -104,47 +92,6 @@ class Account:
 
         Returns:
             tuple[str, bool]: (message, success_flag)
-=======
-
-def apply_news_impact(price: float, impact: str) -> float:
-    """
-    Adjust price based on news impact.
-
-    Args:
-        price (float): The current price of gold.
-        impact (str): One of ['bullish', 'strong_bullish', 'bearish', 'strong_bearish'].
-
-    Returns:
-        float: Updated price after applying news impact.
-    """
-    if impact == "bullish":
-        return price * 1.01
-    if impact == "strong_bullish":
-        return price * 1.02
-    if impact == "bearish":
-        return price * 0.99
-    if impact == "strong_bearish":
-        return price * 0.98
-    return price
-
-
-# =============== Account class ===============
-class Account:
-    """
-    Represents a trading account. Tracks balance, positions, and profit/loss.
-    """
-    def __init__(self, initial_balance=100000.0, lot_size=1, name="Player"):
-        self.name = str(name)
-        self.initial_balance = float(initial_balance)
-        self.balance = float(initial_balance)
-        self.position = 0                 # >0 long; <0 short; =0 no position
-        self.entry_price = 0.0            # Last entry price
-        self.lot_size = lot_size
-
-    def buy(self, price, quantity):
-        """
-        Open a long position.
->>>>>>> Stashed changes
         """
         if self.position != 0:
             return "Existing a position, please close first.", False
@@ -153,7 +100,6 @@ class Account:
             self.position = quantity
             self.entry_price = price
             self.balance -= margin
-<<<<<<< Updated upstream
             return (f"Successfully long {quantity} lots @ {price:.2f}, "
                     f"margin used: {margin:.2f}."), True
         return "Insufficient funds to open a position.", False
@@ -164,14 +110,6 @@ class Account:
 
         Returns:
             tuple[str, bool]: (message, success_flag)
-=======
-            return f"Successfully long {quantity} lots @ {price:.2f}, margin used: {margin:.2f}.", True
-        return "Insufficient funds to open a position.", False
-
-    def sell(self, price, quantity):
-        """
-        Open a short position.
->>>>>>> Stashed changes
         """
         if self.position != 0:
             return "Existing a position, please close first.", False
@@ -180,7 +118,6 @@ class Account:
             self.position = -quantity
             self.entry_price = price
             self.balance -= margin
-<<<<<<< Updated upstream
             return (f"Successfully short {quantity} lots @ {price:.2f}, "
                     f"margin used: {margin:.2f}."), True
         return "Insufficient funds to open a position.", False
@@ -205,54 +142,29 @@ class Account:
         gloProfit.set(gloProfit.get() + pnl)
 
         # release margin
-=======
-            return f"Successfully short {quantity} lots @ {price:.2f}, margin used: {margin:.2f}.", True
-        return "Insufficient funds to open a position.", False
-
-    def close_position(self, current_price):
-        """
-        Close the current position and update balance.
-        """
-        if self.position == 0:
-            return "No positions to close.", 0.0
-        pnl = (current_price - self.entry_price) * self.position * self.lot_size
-        self.balance += pnl
-        gloProfit.set(gloProfit.get() + pnl)  # Record realized PnL for profit history chart
->>>>>>> Stashed changes
         margin_released = abs(self.entry_price * self.position * 0.1)
         self.balance += margin_released
 
         pos = self.position
         self.position = 0
         self.entry_price = 0.0
-<<<<<<< Updated upstream
         msg = (f"Position closed successfully ({'long' if pos > 0 else 'short'} {abs(pos)} lots)! "
-=======
-        msg = (f"Position closed successfully ({'long' if pos>0 else 'short'} {abs(pos)} lots)! "
->>>>>>> Stashed changes
                f"Profit and loss for this period: {pnl:.2f}, released margin: {margin_released:.2f}. "
                f"Account balance: {self.balance:.2f}.")
         return msg, pnl
 
-<<<<<<< Updated upstream
     def floating_pnl(self, current_price: float) -> float:
         """
         Compute current unrealized P&L at `current_price`.
 
         Returns:
             float: Unrealized profit/loss (0 if flat).
-=======
-    def floating_pnl(self, current_price):
-        """
-        Calculate unrealized profit/loss.
->>>>>>> Stashed changes
         """
         if self.position == 0:
             return 0.0
         return (current_price - self.entry_price) * self.position * self.lot_size
 
 
-<<<<<<< Updated upstream
 # =============== Main UI & Game Logic ===============
 class TradingGameUI:
     """
@@ -261,13 +173,14 @@ class TradingGameUI:
     - Advances the timeline, potentially triggering random news and price adjustments.
     - Provides trading operations (buy, sell, close).
     - Tracks and plots profit history; shows daily news with coloring cues.
+    - Persists results to `ranking.csv` and displays a leaderboard.
     """
 
     def __init__(self, root, name: str = "Player"):
         """
         Args:
             root: tk.Tk root window.
-            name (str): Player name to be displayed in the final summary.
+            name (str): Player name to be displayed in the final summary and leaderboard.
         """
         self.root = root
         self.root.title("Gold Magnate Game 2008")
@@ -384,7 +297,7 @@ class TradingGameUI:
 
     # ---------- UI ----------
     def build_ui(self):
-        """Create all UI widgets: top info panel, trading panel, chart, log, and news box."""
+        """Create all UI widgets: top info panel, trading panel, chart, log, news, and leaderboard button."""
         # Top: account & market info
         top = tk.LabelFrame(self.root, text="Account and Market", font=self.font_title, padx=8, pady=8)
         top.pack(side=tk.TOP, fill=tk.X, padx=8, pady=(8, 4))
@@ -432,7 +345,7 @@ class TradingGameUI:
         pf.pack(anchor="w", pady=4)
         tk.Button(pf, text="Profit",  font=self.font_big, command=self.getProfitChart, width=10)\
             .grid(row=0, column=0, padx=4, pady=4)
-        tk.Button(pf, text="History", font=self.font_big, command=self.getProfitChart, width=10)\
+        tk.Button(pf, text="Leaderboard", font=self.font_big, command=self.show_leaderboard, width=12)\
             .grid(row=0, column=1, padx=4, pady=4)
 
         chart_frame = tk.LabelFrame(mid, text="Gold Price Chart", font=self.font_title, padx=8, pady=8)
@@ -653,11 +566,126 @@ class TradingGameUI:
         self.canvas2.get_tk_widget().pack(fill=tk.BOTH, expand=True)
         self.drawChart()
 
+    # ---------- Leaderboard (Ranking) ----------
+    def show_leaderboard(self):
+        """Open a popup window to show the leaderboard loaded from `ranking.csv` (if any)."""
+        win = tk.Toplevel(self.root)
+        win.title("Leaderboard")
+        win.geometry("760x520")
+        main_frame = tk.Frame(win, bg="white")
+        main_frame.pack(fill=tk.BOTH, expand=True)
+
+        df_rank = self._load_ranking_df()
+
+        # podium / row colors (top 3 highlighted)
+        bg_colors = ["#f1c40f", "#bdc3c7", "#e67e22"] + ["white"] * 100
+
+        self.render_leaderboard(main_frame, df_rank, bg_colors)
+
+    def _load_ranking_df(self) -> pd.DataFrame | None:
+        """
+        Load and sort ranking data from `ranking.csv` if the file exists.
+
+        Expected columns:
+            player_name (str), final_balance (float), return_rate (float), end_time (str)
+        Returns:
+            pd.DataFrame | None
+        """
+        file = "ranking.csv"
+        if not os.path.exists(file):
+            return None
+        try:
+            df = pd.read_csv(file)
+            # Ensure required columns exist
+            for col in ["player_name", "final_balance", "return_rate"]:
+                if col not in df.columns:
+                    raise ValueError(f"Column '{col}' missing in ranking.csv")
+            # Sort by return_rate descending, then balance
+            df = df.sort_values(["return_rate", "final_balance"], ascending=[False, False]).reset_index(drop=True)
+            return df
+        except Exception as e:
+            # Show an empty DataFrame with error captured in UI layer
+            print("Failed to load ranking:", e)
+            return None
+
+    def render_leaderboard(self, main_frame: tk.Frame, df_rankings: pd.DataFrame, bg_colors: list[str]):
+        """
+        Part 9 — comments/meaningful names
+        ----------------------------------
+        Render the leaderboard panel.
+
+        Args:
+            main_frame (tk.Frame): The parent container to hold the leaderboard UI.
+            df_rankings (pd.DataFrame): Ranking data with columns:
+                - 'player_name' (str)
+                - 'return_rate' (float, percentage, e.g. 5.23 means +5.23%)
+                - 'final_balance' (float, ending cash balance)
+            bg_colors (list[str]): Background colors to highlight top rows
+                                   (e.g., first 3 for podium).
+        """
+        # Clear previous content
+        for child in main_frame.winfo_children():
+            child.destroy()
+
+        try:
+            if df_rankings is not None and len(df_rankings) > 0:
+                header = tk.Label(
+                    main_frame,
+                    text=f"{'#':<6} {'Player':<16} {'Return':>12} {'Final Balance':>16}",
+                    font=("Courier New", 12, "bold"),
+                    bg="white",
+                    fg="#2c3e50",
+                    anchor="w",
+                )
+                header.pack(fill=tk.X, padx=10, pady=(8, 4))
+
+                rank_frame = tk.Frame(main_frame, bg="white")
+                rank_frame.pack(fill=tk.BOTH, expand=True)
+
+                for idx, row in df_rankings.reset_index(drop=True).iterrows():
+                    # Format display text
+                    rank_num = f"#{idx + 1}"
+                    player_name = str(row['player_name'])[:16]  # truncate to fit
+                    return_rate = f"{row['return_rate']:+6.2f}%"
+                    balance = f"${row['final_balance']:>13,.0f}"
+
+                    # Fixed-width aligned row
+                    rank_text = f"{rank_num:<6} {player_name:<16} {return_rate:>12} {balance:>16}"
+
+                    font_weight = "bold" if idx < 3 else "normal"
+                    row_bg = bg_colors[idx] if idx < len(bg_colors) else "white"
+
+                    rank_label = tk.Label(
+                        rank_frame,
+                        text=rank_text,
+                        font=("Courier New", 11, font_weight),
+                        bg=row_bg,
+                        fg="#2c3e50",
+                        anchor='w'
+                    )
+                    rank_label.pack(fill=tk.BOTH, expand=True, padx=10, pady=2)
+
+            else:
+                no_data_label = tk.Label(
+                    main_frame,
+                    text="No ranking data available yet.\nComplete a game to see rankings!",
+                    font=self.font_big, bg='white', fg='#7f8c8d'
+                )
+                no_data_label.pack(expand=True)
+
+        except Exception as e:
+            error_label = tk.Label(
+                main_frame,
+                text=f"Error loading ranking data:\n{str(e)}",
+                font=self.font_big, bg='white', fg='#e74c3c'
+            )
+            error_label.pack(expand=True)
+
     # ---------- End-of-game settlement ----------
     def end_game(self):
         """
         Stop the timer, force-close any open position at the last price,
-        compute final performance, show a summary dialog, and exit.
+        compute final performance, persist to leaderboard, show a summary, and exit.
         """
         self.timer_running = False
         last_price = float(self.price_df.iloc[-1]['Close'])
@@ -668,6 +696,22 @@ class TradingGameUI:
         final_balance = self.account.balance
         pl = final_balance - self.account.initial_balance
         rr = (pl / self.account.initial_balance) * 100.0
+
+        # Persist to ranking.csv (append mode)
+        try:
+            row = pd.DataFrame([{
+                "player_name": self.player_name,
+                "final_balance": round(final_balance, 2),
+                "return_rate": round(rr, 2),
+                "end_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }])
+            file = "ranking.csv"
+            if os.path.exists(file):
+                row.to_csv(file, mode="a", index=False, header=False)
+            else:
+                row.to_csv(file, index=False)
+        except Exception as e:
+            self.log(f"Warning: failed to write ranking.csv → {e}")
 
         news_review = ("\n\nNews Review:\n" + "\n".join(self.news_history)) if self.news_history \
                       else "\n\n(No major random news was triggered during the game.)"
@@ -711,26 +755,6 @@ if __name__ == "__main__":
         print("Close Short:", msg, "Profit and Loss:", pnl, "Balance:", acc.balance)
 
         print("Tests Finish.")
-=======
-# =============== TradingGameUI: Main UI and Game Logic ===============
-class TradingGameUI:
-    """
-    Main class that controls the trading game, including UI, price updates, 
-    trading actions, and displaying news/events.
-    """
-    def __init__(self, root, name="Player"):
-        self.root = root
-        self.root.title("Gold Magnate Game 2008")
-        ...
-        # (rest of your class unchanged, except docstrings and comments translated above)
-        ...
-
-# =============== Main (with testing block) ===============
-if __name__ == "__main__":
-    # If started with "test" parameter: run account unit tests only; otherwise start the game
-    if "test" in sys.argv:
-        ...
->>>>>>> Stashed changes
     else:
         root = tk.Tk()
         app = TradingGameUI(root, name="Player1")

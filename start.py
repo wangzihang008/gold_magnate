@@ -18,7 +18,7 @@ class TradingGameUI:
 
     def build_ui(self):
         frame = tk.Frame(self.root)
-        frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=80, pady=40)
+        frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=200, pady=40)
 
         mainfarme = tk.LabelFrame(frame, text="Game Dashboard", font=self.font_title, padx=8, pady=8)
         mainfarme.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 8))
@@ -27,18 +27,18 @@ class TradingGameUI:
         buttons = tk.Frame(mainfarme)
         buttons.pack(anchor="w", pady=4)
 
-        tk.Button(buttons, text="Start New Game (2008 Original)", font=self.font_big, command=self.name_collecter_original, width=20).grid(row=0, column=0, padx=4, pady=4)
-        tk.Button(buttons, text="Start New Game (Random Price Changing)", font=self.font_big, command=self.name_collecter, width=20).grid(row=1, column=0, padx=4, pady=4)
+        tk.Button(buttons, text="Start New Game (2008 Original)", font=self.font_big, command=self.name_collecter_original, width=60).grid(row=0, column=0, padx=4, pady=4)
+        tk.Button(buttons, text="Start New Game (Random Price Changing)", font=self.font_big, command=self.name_collecter, width=60).grid(row=1, column=0, padx=4, pady=4)
 
-        tk.Button(buttons, text="Game Ranking", font=self.font_big, command=self.game_ranking, width=20).grid(row=2, column=0, padx=4, pady=4)
-        tk.Button(buttons, text="Exit Game", font=self.font_big, command=self.exit_game, width=20).grid(row=3, column=0, padx=4, pady=4)
+        tk.Button(buttons, text="Game Ranking", font=self.font_big, command=self.game_ranking, width=60).grid(row=2, column=0, padx=4, pady=4)
+        tk.Button(buttons, text="Exit Game", font=self.font_big, command=self.exit_game, width=60).grid(row=3, column=0, padx=4, pady=4)
 
     def name_collecter_original(self):
         for widget in self.root.winfo_children():
             widget.destroy()
         
         frame = tk.Frame(self.root)
-        frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=80, pady=40)
+        frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=200, pady=40)
 
         mainfarme = tk.LabelFrame(frame, text="Player Name (2008 Original)", font=self.font_title, padx=8, pady=8)
         mainfarme.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 8))

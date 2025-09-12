@@ -313,9 +313,9 @@ Good luck, and may you become a Gold Magnate!
 
         btns = tk.Frame(trade)
         btns.pack(anchor="w", pady=4)
-        tk.Button(btns, text="Buy", font=self.font_big, command=self.buy_action, width=10).grid(row=0, column=0, padx=4, pady=4)
-        tk.Button(btns, text="Sell", font=self.font_big, command=self.sell_action, width=10).grid(row=0, column=1, padx=4, pady=4)
-        tk.Button(btns, text="Sell All", font=self.font_big, command=self.close_action, width=10).grid(row=1, column=0, padx=4, pady=4)
+        tk.Button(btns, text="Buy (Long)", font=self.font_big, command=self.buy_action, width=10).grid(row=0, column=0, padx=4, pady=4)
+        tk.Button(btns, text="Sell (Short)", font=self.font_big, command=self.sell_action, width=10).grid(row=0, column=1, padx=4, pady=4)
+        tk.Button(btns, text="Close Position", font=self.font_big, command=self.close_action, width=10).grid(row=1, column=0, padx=4, pady=4)
         self.speed_btn=tk.Button(btns, text="Speed Up(x2)", font=self.font_big, command=self.speed_up, width=10)
         self.speed_btn.grid(row=1, column=1, padx=4, pady=4)
 

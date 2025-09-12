@@ -11,21 +11,22 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 import random
+from datetime import datetime
 
 matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'Arial Unicode MS', 'Arial']
 matplotlib.rcParams['axes.unicode_minus'] = False
 
 #virtual news
 NEWS = {
-    "Fed Raises Interest Rates by 0.25%": 0.95,
-    "Fed Raises Interest Rates by 0.5%": 0.92,
-    "Fed Raises Interest Rates by 0.75%": 0.88,
-    "Fed Cut Interest Rates by 0.25%": 1.05,
-    "Fed Cut Interest Rates by 0.5%": 1.1,
-    "Fed Cut Interest Rates by 0.75%": 1.15,
-    "War Breaks Out": 1.1,
-    "Exacerbate Geopolitical Tensions": 1.1,
-    "New Rescue Act Onboard": 0.9
+    "Fed Raises Interest Rates by 0.25%\n": 0.95,
+    "Fed Raises Interest Rates by 0.5%\n": 0.92,
+    "Fed Raises Interest Rates by 0.75%\n": 0.88,
+    "Fed Cut Interest Rates by 0.25%\n": 1.05,
+    "Fed Cut Interest Rates by 0.5%\n": 1.1,
+    "Fed Cut Interest Rates by 0.75%\n": 1.15,
+    "War Breaks Out\n": 1.1,
+    "Exacerbate Geopolitical Tensions\n": 1.1,
+    "New Rescue Act Onboard\n": 0.9
 }
 
 
@@ -193,7 +194,7 @@ class TradingGameUI:
                 user_news = json.load(f)
             for k, v in user_news.items():
                 if isinstance(v, list):
-                    self.news_map[k] = "；".join(str(x) for x in v)
+                    self.news_map[k] = ";".join(str(x) for x in v)
                 else:
                     self.news_map[k] = str(v)
         except Exception as e:
@@ -280,6 +281,8 @@ Good luck, and may you become a Gold Magnate!
         menu_dropdown = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Menu", menu=menu_dropdown, font=self.font_menu)
         menu_dropdown.add_command(label="Help", command=self.show_help_window, font=self.font_menu)
+        menu_dropdown.add_command(label="Rankings", command=self.show_in_game_rankings, font=self.font_menu)
+
         # --- End Menu Bar ---
 
         top = tk.LabelFrame(self.root, text="Account And Market", font=self.font_title, padx=8, pady=8)
@@ -327,7 +330,6 @@ Good luck, and may you become a Gold Magnate!
         pf.pack(anchor="w", pady=4)
 
         tk.Button(pf, text="Profit", font=self.font_big, command=self.getProfitChart, width=10).grid(row=0, column=0, padx=4, pady=4)
-        tk.Button(pf, text="History", font=self.font_big, command=self.getProfitChart, width=10).grid(row=0, column=1, padx=4, pady=4)
         
         chart_frame = tk.LabelFrame(mid, text="Gold Price Trend Chart", font=self.font_title, padx=8, pady=8)
         chart_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
@@ -500,35 +502,279 @@ Good luck, and may you become a Gold Magnate!
 
             
     def getProfitChart(self):
-        
-        self.profitRoot = tk.Toplevel(root)
+        """Open a popup window and start drawing the rolling profit history."""
+        self.profitRoot = tk.Toplevel(self.root)
         self.profitRoot.title("Profit History")
         self.profitRoot.geometry("1200x800")
-        
         self.fig2, self.ax2 = plt.subplots(figsize=(5, 3))
-        
         self.canvas2 = FigureCanvasTkAgg(self.fig2, master=self.profitRoot)
         self.canvas2.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-        
         self.drawChart()
 
 
-        
-    # Calculate The Result
+
+    # ---------- End-of-game settlement ----------
     def end_game(self):
+        """Stop timer, auto-close any position at last price, save results, show summary, and exit."""
         self.timer_running = False
         last_price = float(self.price_df.iloc[-1]['Close'])
         if self.account.position != 0:
-            msg, pnl = self.account.close_position(last_price)
-            self.log(f"Auto Sell Out(Last Day @ {last_price:.2f}): {msg}")
+           msg, pnl = self.account.close_position(last_price)
+           self.log(f"Automatically close a position (last day @ {last_price:.2f}): {msg}")
 
         final_balance = self.account.balance
         pl = final_balance - self.account.initial_balance
         rr = (pl / self.account.initial_balance) * 100.0
-        messagebox.showinfo("Game Over",
-                            f"Final Account Amount: {final_balance:.2f}\nFinal Earn: {pl:.2f}\nROI(Rate of Return on Investment): {rr:.2f}%")
+
+        # Save game result
+        df = self.save_game_result(final_balance, pl, rr)
+
+        # Get ranking info
+        current_ranking, total_players = self.get_player_ranking(df)
+
+        # Build message
+        result_msg = (
+                   f"Final account balance: {final_balance:.2f}\n"
+                   f"Total profit and loss: {pl:.2f}\n"
+                   f"Return on investment: {rr:.2f}%"
+        )
+        if current_ranking:
+           result_msg += f"\n\nYour Ranking: #{current_ranking} out of {total_players} players!"
+
+        # Popup
+        messagebox.showinfo("Game over", result_msg)
+
+        # Show leaderboard
+        self.show_rankings(df, current_ranking, total_players, rr)
+
+# =============== Main (with your testing section) ===============
+        # Close window
         self.root.quit()
 
+    def save_game_result(self, final_balance, pl, rr):
+        """Save game result to CSV file (game_rankings_hard_mode.csv)."""
+        csv_file = "game_rankings_hard_mode.csv"
+        
+        # Create new record
+        new_record = {
+            'player_name': self.player_name,
+            'final_balance': final_balance,
+            'profit_loss': pl,
+            'return_rate': rr,
+            'play_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        # Read existing or create new DataFrame
+        if os.path.exists(csv_file):
+            try:
+                df = pd.read_csv(csv_file)
+            except:
+                df = pd.DataFrame()
+        else:
+            df = pd.DataFrame()
+        
+        # Append new record
+        new_df = pd.DataFrame([new_record])
+        df = pd.concat([df, new_df], ignore_index=True)
+        
+        # Save
+        df.to_csv(csv_file, index=False)
+        
+        return df
+    
+    def get_player_ranking(self, df):
+        """Get current player's ranking among all records (by return_rate)."""
+        if df.empty:
+            return None, 0
+        
+        # Sort by return rate
+        df_sorted = df.sort_values('return_rate', ascending=False).reset_index(drop=True)
+        
+        # Find current player's latest record's ranking
+        current_record = df_sorted[df_sorted['player_name'] == self.player_name].iloc[-1:]
+        if not current_record.empty:
+            ranking = df_sorted.index[df_sorted['return_rate'] == current_record['return_rate'].iloc[0]][0] + 1
+            total_players = len(df_sorted)
+            return ranking, total_players
+        
+        return None, len(df_sorted)
+    
+    def show_rankings(self, df, current_ranking, total_players, current_rr):
+        """Show leaderboard window (Top 5 and current player's position)."""
+        ranking_window = tk.Toplevel(self.root)
+        ranking_window.title("Game Rankings - 2008 Original")
+        ranking_window.geometry("600x500")
+        ranking_window.configure(bg='white')
+        
+        # Main frame
+        main_frame = tk.Frame(ranking_window, bg='white')
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        # Title
+        title_label = tk.Label(main_frame, text="🏆 Game Rankings - 2008 Original", 
+                              font=self.font_title, bg='white', fg='#2c3e50')
+        title_label.pack(pady=(0, 20))
+        
+        # Current player's ranking
+        if current_ranking:
+            rank_text = f"👤 {self.player_name}'s Ranking: #{current_ranking} / {total_players} players\nReturn Rate: {current_rr:.2f}%"
+            rank_color = '#27ae60' if current_rr > 0 else '#e74c3c'
+        else:
+            rank_text = f"👤 {self.player_name}: No ranking data available"
+            rank_color = '#7f8c8d'
+        
+        current_rank_label = tk.Label(main_frame, text=rank_text, 
+                                     font=("Microsoft YaHei", 16), 
+                                     bg='white', fg=rank_color)
+        current_rank_label.pack(pady=(0, 20))
+        
+        # Separator
+        separator = tk.Frame(main_frame, height=2, bg='#bdc3c7')
+        separator.pack(fill=tk.X, pady=(0, 20))
+        
+        # Top 5 title
+        top5_label = tk.Label(main_frame, text="🥇 Top 5 Players", 
+                             font=("Microsoft YaHei", 18, "bold"), 
+                             bg='white', fg='#2c3e50')
+        top5_label.pack(pady=(0, 15))
+        
+        # Content
+        if not df.empty:
+            # Sort by return and keep each player's best
+            df_best = df.loc[df.groupby('player_name')['return_rate'].idxmax()]
+            df_sorted = df_best.sort_values('return_rate', ascending=False).head(5)
+            
+            # Container
+            ranking_frame = tk.Frame(main_frame, bg='white')
+            ranking_frame.pack(fill=tk.BOTH, expand=True)
+            
+            medals = ['🥇', '🥈', '🥉', '🏅', '🏅']
+            colors = ['#ffd700', '#c0c0c0', '#cd7f32', '#4a90e2', '#4a90e2']
+            
+            for idx, (_, row) in enumerate(df_sorted.iterrows()):
+                medal = medals[idx] if idx < len(medals) else f"#{idx+1}"
+                color = colors[idx] if idx < len(colors) else '#7f8c8d'
+                
+                row_frame = tk.Frame(ranking_frame, bg='white')
+                row_frame.pack(fill=tk.X, pady=5)
+                
+                # Fixed-width aligned line for consistent layout
+                rank_text = f"{medal} {row['player_name']:>15} | Return: {row['return_rate']:>8.2f}% | Balance: ${row['final_balance']:>10,.2f}"
+                
+                rank_label = tk.Label(row_frame, text=rank_text, 
+                                     font=("Courier New", 14, "bold" if idx < 3 else "normal"),
+                                     bg='white', fg=color, anchor='w')
+                rank_label.pack(fill=tk.X)
+        else:
+            no_data_label = tk.Label(main_frame, text="No ranking data available yet.", 
+                                   font=self.font_big, bg='white', fg='#7f8c8d')
+            no_data_label.pack()
+        
+        # Close button
+        close_btn = tk.Button(main_frame, text="Close", font=self.font_big, 
+                             command=ranking_window.destroy, width=15,
+                             bg='#3498db', fg='white', relief=tk.FLAT)
+        close_btn.pack(pady=(20, 0))
+
+    def show_in_game_rankings(self):
+        """Display rankings window during the game."""
+        csv_file = "game_rankings_hard_mode.csv"
+        
+        # Create ranking window
+        ranking_window = tk.Toplevel(self.root)
+        ranking_window.title("Live Rankings - 2008 Original")
+        ranking_window.geometry("650x450")
+        ranking_window.configure(bg='white')
+        
+        # Window attributes
+        ranking_window.transient(self.root)  # set as child of root
+        ranking_window.grab_set()  # modal
+        
+        # Main frame
+        main_frame = tk.Frame(ranking_window, bg='white')
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        
+        # Title
+        title_label = tk.Label(main_frame, text="Top 5 Players - 2008 Gold Trading", 
+                              font=("Microsoft YaHei", 18, "bold"), bg='white', fg='#2c3e50')
+        title_label.pack(pady=(0, 15))
+        
+        # If there is data
+        if os.path.exists(csv_file):
+            try:
+                df = pd.read_csv(csv_file)
+                if not df.empty:
+                    # Sort by return and keep only best attempt per player
+                    df_best = df.loc[df.groupby('player_name')['return_rate'].idxmax()]
+                    df_sorted = df_best.sort_values('return_rate', ascending=False).head(5)
+                    
+                    # Content frame
+                    content_frame = tk.Frame(main_frame, bg='white')
+                    content_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
+                    
+                    # Header
+                    header_frame = tk.Frame(content_frame, bg='#34495e', height=40)
+                    header_frame.pack(fill=tk.X, pady=(0, 2))
+                    header_frame.pack_propagate(False)
+                    
+                    header_text = "Rank   Player Name          Return Rate      Final Balance"
+                    header_label = tk.Label(header_frame, text=header_text, 
+                                          font=("Courier New", 12, "bold"),
+                                          bg='#34495e', fg='white', anchor='w')
+                    header_label.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+                    
+                    # Ranking items
+                    bg_colors = ['#fff9c4', '#f0f0f0', '#ffeaa7', '#ddd', '#ddd']
+                    
+                    for idx, (_, row) in enumerate(df_sorted.iterrows()):
+                        rank_frame = tk.Frame(content_frame, bg=bg_colors[idx], height=35)
+                        rank_frame.pack(fill=tk.X, pady=1)
+                        rank_frame.pack_propagate(False)
+                        
+                        # Formatted display text
+                        rank_num = f"#{idx + 1}"
+                        player_name = str(row['player_name'])[:16]  # length limit
+                        player_name = str(row['player_name'])[:16]
+                        return_rate = f"{row['return_rate']:+6.2f}%"
+                        balance = f"${row['final_balance']:>13,.0f}"
+                        
+                        rank_text = f"{rank_num:<6} {player_name:<16} {return_rate:>12} {balance:>16}"
+                        
+                        rank_label = tk.Label(rank_frame, text=rank_text, 
+                                            font=("Courier New", 11, "bold" if idx < 3 else "normal"),
+                                            bg=bg_colors[idx], fg='#2c3e50', anchor='w')
+                        rank_label.pack(fill=tk.BOTH, expand=True, padx=10, pady=2)
+                    
+                else:
+                    no_data_label = tk.Label(main_frame, text="No ranking data available yet.\nComplete a game to see rankings!", 
+                                           font=self.font_big, bg='white', fg='#7f8c8d')
+                    no_data_label.pack(expand=True)
+                    
+            except Exception as e:
+                error_label = tk.Label(main_frame, text=f"Error loading ranking data:\n{str(e)}", 
+                                     font=self.font_big, bg='white', fg='#e74c3c')
+                error_label.pack(expand=True)
+        else:
+            no_file_label = tk.Label(main_frame, text="No ranking file found.\nComplete a game to create the leaderboard!", 
+                                   font=self.font_big, bg='white', fg='#7f8c8d')
+            no_file_label.pack(expand=True)
+        
+        # Buttons frame
+        btn_frame = tk.Frame(main_frame, bg='white')
+        btn_frame.pack(side=tk.BOTTOM, fill=tk.X)
+        
+        # Refresh button
+        refresh_btn = tk.Button(btn_frame, text="Refresh", font=("Microsoft YaHei", 12), 
+                               command=lambda: [ranking_window.destroy(), self.show_in_game_rankings()], 
+                               width=10, bg='#27ae60', fg='white', relief=tk.FLAT)
+        refresh_btn.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # Close button
+        close_btn = tk.Button(btn_frame, text="Close", font=("Microsoft YaHei", 12), 
+                             command=ranking_window.destroy, width=10,
+                             bg='#3498db', fg='white', relief=tk.FLAT)
+        close_btn.pack(side=tk.RIGHT)
+        
         
 
 # Main function

@@ -18,7 +18,7 @@ class TradingGameUI:
 
     def build_ui(self):
         frame = tk.Frame(self.root)
-        frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=80, pady=40)
+        frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=200, pady=40)
 
         mainfarme = tk.LabelFrame(frame, text="Game Dashboard", font=self.font_title, padx=8, pady=8)
         mainfarme.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 8))
@@ -27,18 +27,18 @@ class TradingGameUI:
         buttons = tk.Frame(mainfarme)
         buttons.pack(anchor="w", pady=4)
 
-        tk.Button(buttons, text="Start New Game (2008 Original)", font=self.font_big, command=self.name_collecter_original, width=20).grid(row=0, column=0, padx=4, pady=4)
-        tk.Button(buttons, text="Start New Game (Random Price Changing)", font=self.font_big, command=self.name_collecter, width=20).grid(row=1, column=0, padx=4, pady=4)
+        tk.Button(buttons, text="Start New Game (2008 Original)", font=self.font_big, command=self.name_collecter_original, width=60).grid(row=0, column=0, padx=4, pady=4)
+        tk.Button(buttons, text="Start New Game (Random Price Changing)", font=self.font_big, command=self.name_collecter, width=60).grid(row=1, column=0, padx=4, pady=4)
 
-        tk.Button(buttons, text="Game Ranking", font=self.font_big, command=self.game_ranking, width=20).grid(row=2, column=0, padx=4, pady=4)
-        tk.Button(buttons, text="Exit Game", font=self.font_big, command=self.exit_game, width=20).grid(row=3, column=0, padx=4, pady=4)
+        tk.Button(buttons, text="Game Ranking", font=self.font_big, command=self.game_ranking, width=60).grid(row=2, column=0, padx=4, pady=4)
+        tk.Button(buttons, text="Exit Game", font=self.font_big, command=self.exit_game, width=60).grid(row=3, column=0, padx=4, pady=4)
 
     def name_collecter_original(self):
         for widget in self.root.winfo_children():
             widget.destroy()
         
         frame = tk.Frame(self.root)
-        frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=80, pady=40)
+        frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=200, pady=40)
 
         mainfarme = tk.LabelFrame(frame, text="Player Name (2008 Original)", font=self.font_title, padx=8, pady=8)
         mainfarme.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 8))
@@ -99,14 +99,7 @@ class TradingGameUI:
     def start_new_harder_game(self):
         name=self.entry_widget.get("1.0", "end-1c")
         if len(name) < 3:
-            if self.r is not None:
-                self.r.destroy()
-                self.r = tk.Tk()
-            else:
-                self.r = tk.Tk()
-            msg = tk.Label(self.r, text="Invalid Name", font=self.font_title, padx=8, pady=8)
-            msg.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 8))
-            # print("Invalid Name")
+            tk.messagebox.showinfo("Warning!","Invalid Name， pls input at least 3 letters")
             return
         else:
             if self.r is not None:
@@ -118,38 +111,38 @@ class TradingGameUI:
         return
 
     def game_ranking(self):
-        """显示2008原版游戏排行榜"""
+        """show player ranking with 2008 original game """
         csv_file = "game_rankings_2008.csv"
         
-        # 创建排行榜窗口
+        # create window of ranking
         ranking_window = tk.Toplevel(self.root)
         ranking_window.title("Game Rankings - 2008 Original")
         ranking_window.geometry("600x500")
         ranking_window.configure(bg='white')
         
-        # 主框架
+        # main frame
         main_frame = tk.Frame(ranking_window, bg='white')
         main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
         
-        # 标题
+        # tatile
         title_label = tk.Label(main_frame, text="🏆 Game Rankings - 2008 Original", 
                               font=self.font_title, bg='white', fg='#2c3e50')
         title_label.pack(pady=(0, 20))
         
-        # 检查是否有数据
+        # check if data existed
         if os.path.exists(csv_file):
             try:
                 df = pd.read_csv(csv_file)
                 if not df.empty:
-                    # 按回报率排序并去重（每个玩家只显示最佳成绩）
+                    # remove duplicated record based investment return rates
                     df_best = df.loc[df.groupby('player_name')['return_rate'].idxmax()]
                     df_sorted = df_best.sort_values('return_rate', ascending=False).head(10)
                     
-                    # 创建排行榜框架
+                    # create ranking frame
                     ranking_frame = tk.Frame(main_frame, bg='white')
                     ranking_frame.pack(fill=tk.BOTH, expand=True)
                     
-                    # 添加滚动条
+                    # add scroll bar
                     canvas = tk.Canvas(ranking_frame, bg='white')
                     scrollbar = tk.Scrollbar(ranking_frame, orient="vertical", command=canvas.yview)
                     scrollable_frame = tk.Frame(canvas, bg='white')
@@ -197,7 +190,7 @@ class TradingGameUI:
                                    font=self.font_big, bg='white', fg='#7f8c8d')
             no_file_label.pack()
         
-        # 关闭按钮
+        # close button
         close_btn = tk.Button(main_frame, text="Close", font=self.font_big, 
                              command=ranking_window.destroy, width=15,
                              bg='#3498db', fg='white', relief=tk.FLAT)

@@ -369,8 +369,8 @@ Good luck, and may you become a Gold Magnate!
 
         btns = tk.Frame(trade)
         btns.pack(anchor="w", pady=4)
-        tk.Button(btns, text="Buy (long)",  font=self.font_big, command=self.buy_action,  width=10).grid(row=0, column=0, padx=4, pady=4)
-        tk.Button(btns, text="Sell (short)", font=self.font_big, command=self.sell_action, width=10).grid(row=0, column=1, padx=4, pady=4)
+        tk.Button(btns, text="Buy (long)",  font=self.font_big, command=self.buy_action,  width=20).grid(row=0, column=0, padx=4, pady=4)
+        tk.Button(btns, text="Sell (short)", font=self.font_big, command=self.sell_action, width=20).grid(row=0, column=1, padx=4, pady=4)
         tk.Button(btns, text="Close a position", font=self.font_big, command=self.close_action, width=22).grid(row=1, column=0, columnspan=2, padx=4, pady=4)
 
         tk.Label(trade, text="Note: 10% margin; close an existing position before opening a new one.",
